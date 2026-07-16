@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "milind1122/java_applicationdevopsproject"
+        DOCKER_IMAGE = "vaibhav2606/final_project"
         DOCKER_TAG = "${BUILD_NUMBER}"
         REGION = "ap-south-1"
         CLUSTER_NAME = "java-eks-cluster"
