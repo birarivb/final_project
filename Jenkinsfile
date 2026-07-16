@@ -31,7 +31,7 @@ pipeline {
             steps {
                 sh '''
                 docker rm -f final_project || true
-                docker run -d --name final_project -p 2222:5000 final_project
+                docker run -d --name final_project -p 2222:8080 final_project
                 '''
             }
         }
