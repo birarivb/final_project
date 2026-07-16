@@ -1,74 +1,40 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "vaibhav2606/final_project"
-        DOCKER_TAG = "${BUILD_NUMBER}"
-        REGION = "ap-south-1"
-        CLUSTER_NAME = "java-eks-cluster"
-
+    tools {
+        jdk 'JDK17'
+        maven 'Maven'
     }
 
     stages {
-        stage('Checkout Code') {
+
+        stage('Clone') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/birarivb/final_project.git'
             }
         }
 
-      stage('SonarQube Analysis') {
-    steps {
-			echo "Skipping SonarQube"
-    }
-}
-
-        stage('Build Docker Image') {
+        stage('Build') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Docker Login') {
+        stage('Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub-cred',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    '''
-                }
+                sh 'docker build -t final_project .'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Deploy') {
             steps {
                 sh '''
-                docker push $DOCKER_IMAGE:$DOCKER_TAG
-                docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_IMAGE:latest
-                docker push $DOCKER_IMAGE:latest
+                docker rm -f final_project || true
+                docker run -d --name final_project -p 9000:5000 final_project
                 '''
             }
         }
 
-        stage('Deploy to EKS') {
-            steps {
-                sh '''
-                aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
-                kubectl set image deployment/java-war-deployment \
-                java-war-container=$DOCKER_IMAGE:$DOCKER_TAG
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "Deployment Successful 🚀"
-        }
-        failure {
-            echo "Pipeline Failed ❌"
-        }
     }
 }
