@@ -40,9 +40,7 @@ pipeline {
             
         }
                 stage('SonarQube Analysis') {
-                        when {
-        expression { false }
-    }
+
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh """
